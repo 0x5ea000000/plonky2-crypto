@@ -2,7 +2,11 @@ use plonky2::hash::hash_types::RichField;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
-use super::{sha256::WitnessHashSha2, sha256_merkle::{MerkleProofSha256Gadget, DeltaMerkleProofSha256Gadget}, WitnessHash};
+use super::{
+    sha256::WitnessHashSha2,
+    sha256_merkle::{DeltaMerkleProofSha256Gadget, MerkleProofSha256Gadget},
+    WitnessHash,
+};
 
 #[serde_as]
 #[derive(Serialize, Deserialize, PartialEq, Clone, Copy)]
@@ -95,14 +99,14 @@ impl MerkleProofSha256Gadget {
         merkle_proof: &MerkleProof256,
     ) {
         witness.set_hash256_target(&self.value, &merkle_proof.value.0);
-        witness.set_target(self.index, F::from_noncanonical_u64(merkle_proof.index));
+        witness
+            .set_target(self.index, F::from_noncanonical_u64(merkle_proof.index))
+            .unwrap();
         for (i, sibling) in self.siblings.iter().enumerate() {
             witness.set_hash256_target(sibling, &merkle_proof.siblings[i].0);
         }
     }
 }
-
-
 
 impl DeltaMerkleProofSha256Gadget {
     pub fn set_witness_from_proof<F: RichField, W: WitnessHashSha2<F>>(
@@ -112,7 +116,9 @@ impl DeltaMerkleProofSha256Gadget {
     ) {
         witness.set_hash256_target(&self.old_value, &merkle_proof.old_value.0);
         witness.set_hash256_target(&self.new_value, &merkle_proof.new_value.0);
-        witness.set_target(self.index, F::from_noncanonical_u64(merkle_proof.index));
+        witness
+            .set_target(self.index, F::from_noncanonical_u64(merkle_proof.index))
+            .unwrap();
         for (i, sibling) in self.siblings.iter().enumerate() {
             witness.set_hash256_target(sibling, &merkle_proof.siblings[i].0);
         }
