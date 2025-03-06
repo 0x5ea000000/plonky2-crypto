@@ -34,10 +34,12 @@ impl BigUintTarget {
         dst.write_target_vec(&self.limbs.iter().map(|bt| bt.0).collect::<Vec<Target>>())
     }
 
-    pub fn deserialize(src: &mut plonky2::util::serialization::Buffer) -> plonky2::util::serialization::IoResult<Self> {
+    pub fn deserialize(
+        src: &mut plonky2::util::serialization::Buffer,
+    ) -> plonky2::util::serialization::IoResult<Self> {
         let target_limbs = src.read_target_vec()?;
         let limbs = target_limbs.into_iter().map(U32Target).collect();
-        Ok(Self {limbs})
+        Ok(Self { limbs })
     }
 }
 
@@ -462,28 +464,40 @@ impl<F: RichField + Extendable<D>, const D: usize> SimpleGenerator<F, D>
             .collect()
     }
 
-    fn run_once(&self, witness: &PartitionWitness<F>, out_buffer: &mut GeneratedValues<F>) {
+    fn run_once(
+        &self,
+        witness: &PartitionWitness<F>,
+        out_buffer: &mut GeneratedValues<F>,
+    ) -> Result<(), anyhow::Error> {
         let a = witness.get_biguint_target(self.a.clone());
         let b = witness.get_biguint_target(self.b.clone());
         let (div, rem) = a.div_rem(&b);
 
         out_buffer.set_biguint_target(&self.div, &div);
         out_buffer.set_biguint_target(&self.rem, &rem);
+
+        Ok(())
     }
 
     fn id(&self) -> String {
         "BigUintDivRemGenerator".to_string()
     }
 
-    fn serialize(&self, dst: &mut Vec<u8>, common_data: &plonky2::plonk::circuit_data::CommonCircuitData<F, D>) -> plonky2::util::serialization::IoResult<()> {
+    fn serialize(
+        &self,
+        dst: &mut Vec<u8>,
+        common_data: &plonky2::plonk::circuit_data::CommonCircuitData<F, D>,
+    ) -> plonky2::util::serialization::IoResult<()> {
         self.a.serialize(dst)?;
         self.b.serialize(dst)?;
         self.div.serialize(dst)?;
         self.rem.serialize(dst)
     }
 
-    fn deserialize(src: &mut plonky2::util::serialization::Buffer, common_data: &plonky2::plonk::circuit_data::CommonCircuitData<F, D>) -> plonky2::util::serialization::IoResult<Self>
-    {
+    fn deserialize(
+        src: &mut plonky2::util::serialization::Buffer,
+        common_data: &plonky2::plonk::circuit_data::CommonCircuitData<F, D>,
+    ) -> plonky2::util::serialization::IoResult<Self> {
         let a = BigUintTarget::deserialize(src)?;
         let b = BigUintTarget::deserialize(src)?;
         let div = BigUintTarget::deserialize(src)?;
